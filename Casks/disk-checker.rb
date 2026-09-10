@@ -1,8 +1,8 @@
 cask "disk-checker" do
-  version "0.1.0"
-  sha256 "a222f7031eee7965785a894e1adeef7cbd7804646c724bdc1a5913f644d9cc95"
+  version "0.1.1"
+  sha256 "8453b0a02f78ef277eadbef76566fc1e36c719befbcf821208b2b22ebfe4713c"
 
-  url "https://github.com/praveen902012/mac-diskchecker/releases/download/v0.1.0/Disk-Checker-0.1.0-arm64.zip"
+  url "https://github.com/praveen902012/mac-diskchecker/releases/download/v0.1.1/Disk-Checker-0.1.1-arm64.zip"
   name "Disk Checker"
   desc "Explore Mac storage and move selected files and screenshots to Trash"
   homepage "https://github.com/praveen902012/mac-diskchecker"

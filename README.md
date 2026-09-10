@@ -4,7 +4,7 @@ A native macOS storage explorer built with SwiftUI. Requires macOS 14 or later a
 
 ## Install with Homebrew
 
-Version 0.1.0 is a development prerelease for Apple silicon Macs running macOS 14 or later. It has an ad-hoc signature and is **not notarized**; macOS Gatekeeper may block it from launching. This is not yet a production-signed distribution.
+Version 0.1.1 is a development prerelease for Apple silicon Macs running macOS 14 or later. It has an ad-hoc signature and is **not notarized**; macOS Gatekeeper may block it from launching. This is not yet a production-signed distribution.
 
 ```sh
 brew tap praveen902012/disk-checker https://github.com/praveen902012/mac-diskchecker.git
@@ -12,6 +12,14 @@ brew install --cask praveen902012/disk-checker/disk-checker
 ```
 
 Downloads and release notes: [GitHub releases](https://github.com/praveen902012/mac-diskchecker/releases).
+
+To update an existing installation:
+
+```sh
+brew update
+brew upgrade --cask praveen902012/disk-checker/disk-checker
+open -a "Disk Checker"
+```
 
 ## Run
 
