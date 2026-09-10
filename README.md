@@ -2,6 +2,17 @@
 
 A native macOS storage explorer built with SwiftUI. Requires macOS 14 or later and Swift 6 to build. No third-party dependencies or network requests.
 
+## Install with Homebrew
+
+Version 0.1.0 is a development prerelease for Apple silicon Macs running macOS 14 or later. It has an ad-hoc signature and is **not notarized**; macOS Gatekeeper may block it from launching. This is not yet a production-signed distribution.
+
+```sh
+brew tap praveen902012/disk-checker https://github.com/praveen902012/mac-diskchecker.git
+brew install --cask praveen902012/disk-checker/disk-checker
+```
+
+Downloads and release notes: [GitHub releases](https://github.com/praveen902012/mac-diskchecker/releases).
+
 ## Run
 
 ```sh
@@ -49,5 +60,5 @@ The batch only moves reviewed files. Files that changed since review are skipped
 
 ## Homebrew package
 
-Run `python3 scripts/homebrew-release.py` to build a versioned ZIP and checksum-verified local cask. Once the GitHub release repository is configured, use `--repo OWNER/REPO` to generate an HTTPS release cask. See [Homebrew packaging and installation](packaging/homebrew/README.md) for local tap installation and publishing steps.
+Run `python3 scripts/homebrew-release.py` to build a versioned ZIP and checksum-verified release cask for `praveen902012/mac-diskchecker`. Use `--local` for a local file-URL test cask. The generated release archive and `Casks/disk-checker.rb` must be published before public installation works. See [Homebrew packaging and installation](packaging/homebrew/README.md) for local tap installation and publishing steps.
 # mac-diskchecker
