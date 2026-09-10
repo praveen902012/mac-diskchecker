@@ -69,4 +69,7 @@ The batch only moves reviewed files. Files that changed since review are skipped
 ## Homebrew package
 
 Run `python3 scripts/homebrew-release.py` to build a versioned ZIP and checksum-verified release cask for `praveen902012/mac-diskchecker`. Use `--local` for a local file-URL test cask. The generated release archive and `Casks/disk-checker.rb` must be published before public installation works. See [Homebrew packaging and installation](packaging/homebrew/README.md) for local tap installation and publishing steps.
-# mac-diskchecker
+
+## Build and publish a release
+
+Follow [Build and Release](BUILD_AND_RELEASE.md) for versioning, tests, app packaging, Git push, GitHub release upload, verification, and Homebrew install/update commands.
