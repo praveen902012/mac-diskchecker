@@ -174,8 +174,13 @@ struct ContentView: View {
         HStack(spacing: 0) {
             ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                Label("Disk Checker", systemImage: "internaldrive.fill")
-                    .font(.title2.bold())
+                HStack(spacing: 10) {
+                    Image(nsImage: NSApplication.shared.applicationIconImage)
+                        .resizable().interpolation(.high)
+                        .frame(width: 36, height: 36)
+                        .accessibilityHidden(true)
+                    Text("Disk Checker").font(.title2.bold())
+                }
                 Text("A clearer view of your storage.").foregroundStyle(.secondary)
                 Button { model.choose() } label: {
                     Label("Scan a folder", systemImage: "folder.badge.plus").frame(maxWidth: .infinity)
