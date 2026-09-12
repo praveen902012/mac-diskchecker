@@ -186,3 +186,17 @@ open -R "/Applications/Disk Checker.app"
 ```
 
 `open -R` reveals the actual installed copy in Finder. Capture any macOS launch warning rather than assuming reinstallation resolves a signing problem.
+
+## DMG release asset
+
+Build once with `./scripts/package.sh`, then run:
+
+```sh
+python3 scripts/dmg-release.py --skip-build
+```
+
+This creates `dist/Disk-Checker-VERSION-arm64.dmg` and its `.dmg.sha256` file (with the matching architecture suffix). The image contains the app, an Applications shortcut, and installation notes. The script checks the app signature and verifies the disk image; it refuses to overwrite an existing DMG.
+
+Upload both DMG files alongside the ZIP and ZIP checksum in the versioned GitHub release. Installer binaries stay in release assets; commit the source, version, packaging scripts, and Homebrew cask to Git. Include all four asset paths in `gh release create`, or use `gh release upload vVERSION DMG_PATH CHECKSUM_PATH` for an existing release. Do not replace published assets.
+
+After upload, download both archives and compare them with the local originals. To check the DMG locally, mount it read-only with `hdiutil attach -readonly -nobrowse`, verify the mounted app with `codesign --verify --deep --strict`, and detach it with `hdiutil detach` when finished.

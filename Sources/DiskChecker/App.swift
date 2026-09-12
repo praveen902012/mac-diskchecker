@@ -1,6 +1,10 @@
 import SwiftUI
 import AppKit
 
+// Select the property-wrapper type explicitly; some Command Line Tools SDKs
+// expose a same-named State macro without shipping its compiler plugin.
+typealias ViewState<Value> = SwiftUI.State<Value>
+
 func sizeText(_ bytes: Int64) -> String {
     ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
 }
@@ -12,7 +16,51 @@ final class DiskModel: ObservableObject {
     @Published var screenshots: [DesktopScreenshot] = []
     @Published var screenshotIssues: [String] = []
     @Published var screenshotReport: String?
-    var busy: Bool { scanning || screenshotBusy }
+    @Published var aiBusy = false
+    @Published var showAI = false
+    @Published var aiReport: AIReport?
+    @Published var aiPath = ""
+    @Published var aiProgress = ""
+    private var aiCancellation: ScanCancellation?
+    var busy: Bool { scanning || screenshotBusy || aiBusy }
+
+    func invalidateAI() {
+        aiReport = nil
+        aiPath = ""
+        aiProgress = ""
+    }
+
+    func checkAI() {
+        guard !busy, let node else { return }
+        let root = node.url
+        let token = ScanCancellation()
+        invalidateAI()
+        aiPath = root.path
+        aiCancellation = token
+        aiBusy = true
+        aiProgress = "Checking image metadata…"
+        showAI = true
+        let scoped = root.startAccessingSecurityScopedResource()
+        Task {
+            let report = await Task.detached(priority: .userInitiated) {
+                AIMetadata.scan(root, cancellation: token) { count, name in
+                    Task { @MainActor [weak self] in
+                        guard let self, self.aiBusy, self.aiCancellation === token, !token.isCancelled else { return }
+                        self.aiProgress = "\(count.formatted()) files checked · \(name)"
+                    }
+                }
+            }.value
+            if scoped { root.stopAccessingSecurityScopedResource() }
+            aiReport = report
+            aiBusy = false
+            aiCancellation = nil
+        }
+    }
+
+    func cancelAI() {
+        aiCancellation?.cancel()
+        aiProgress = "Cancelling…"
+    }
     @Published var result: ScanResult?
     @Published var current = 0
     @Published var scanning = false
@@ -114,6 +162,7 @@ final class DiskModel: ObservableObject {
     }
     func scan(_ url: URL, restoring folder: URL? = nil) {
         guard !busy else { return }
+        invalidateAI()
         let token = ScanCancellation()
         cancellation = token
         scanning = true
@@ -166,9 +215,9 @@ struct DiskCheckerApp: App {
 
 struct ContentView: View {
     @ObservedObject var model: DiskModel
-    @State private var showIssues = false
-    @State private var pendingTrash: ScanNode?
-    @State private var showTrashConfirmation = false
+    @ViewState private var showIssues = false
+    @ViewState private var pendingTrash: ScanNode?
+    @ViewState private var showTrashConfirmation = false
     private let colors: [Color] = [.teal, .blue, .indigo, .purple, .pink, .orange, .mint, .cyan]
     var body: some View {
         HStack(spacing: 0) {
@@ -196,6 +245,12 @@ struct ContentView: View {
                 Button { model.reviewDesktopScreenshots() } label: {
                     Label("Delete Desktop Screenshots…", systemImage: "photo.on.rectangle")
                 }.disabled(model.busy)
+                Button { model.checkAI() } label: {
+                    Label("Check AI Metadata…", systemImage: "doc.text.magnifyingglass")
+                }.disabled(model.busy || model.node == nil)
+                if model.aiReport != nil {
+                    Button("View AI Metadata Results…") { model.showAI = true }.disabled(model.busy)
+                }
                 Spacer()
                 Label("Private by design", systemImage: "lock.shield").font(.headline)
                 Text("Files stay on your Mac. Review large items or Desktop screenshots before moving them to Trash.")
@@ -300,6 +355,9 @@ struct ContentView: View {
             }
         } message: { item in
             Text("\(item.url.path)\n\n\(sizeText(item.bytes)) in the last scan.\(item.isDirectory ? " This moves the folder and everything inside it." : "") You can restore it from Finder’s Trash. Space is reclaimed only after the Trash is emptied.")
+        }
+        .sheet(isPresented: $model.showAI) {
+            AIMetadataView(model: model)
         }
         .sheet(isPresented: $model.showScreenshots) {
             VStack(alignment: .leading, spacing: 16) {

@@ -4,6 +4,7 @@ import Foundation
 struct ScannerTests {
     static func main() throws {
         let suite = ScannerTests()
+        try suite.testAIMetadata()
         try suite.testAccountingAndLinks()
         try suite.testCancellation()
         suite.testMissingRoot()
