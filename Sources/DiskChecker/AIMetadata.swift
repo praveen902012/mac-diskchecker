@@ -3,20 +3,20 @@ import ImageIO
 import Darwin
 import zlib
 
-enum AIInspectionStatus: String, Sendable {
+enum AIInspectionStatus: String, DiskTransferable {
     case hints = "AI metadata hints"
     case none = "No hints found"
     case unsupported = "Unsupported"
     case unreadable = "Could not inspect"
 }
 
-struct AIEvidence: Sendable, Equatable {
+struct AIEvidence: DiskTransferable, Equatable {
     let field: String
     let value: String
     let tool: String
 }
 
-struct AIInspection: Identifiable, Sendable {
+struct AIInspection: Identifiable, DiskTransferable {
     let url: URL
     let bytes: Int64
     let status: AIInspectionStatus
@@ -25,7 +25,7 @@ struct AIInspection: Identifiable, Sendable {
     var id: URL { url }
 }
 
-struct AIReport: Sendable {
+struct AIReport: DiskTransferable {
     var items: [AIInspection] = []
     var cancelled = false
     var issues: [String] = []
@@ -40,7 +40,7 @@ enum AIMetadata {
     enum Failure: Error { case malformed, limit }
 
     static func scan(_ root: URL, cancellation: ScanCancellation,
-                     progress: @Sendable (Int, String) -> Void = { _, _ in }) -> AIReport {
+                     progress: ScanProgress = { _, _ in }) -> AIReport {
         var report = AIReport()
         var rootInfo = stat()
         guard lstat(root.path, &rootInfo) == 0, rootInfo.st_mode & S_IFMT == S_IFDIR else {
@@ -182,7 +182,7 @@ enum AIMetadata {
                    guard let name = node["class_type"] as? String, node["inputs"] is [String: Any] else { return false }
                    return ["KSampler", "KSamplerAdvanced", "SamplerCustom", "SamplerCustomAdvanced"].contains(name)
                }) { tool = "ComfyUI generation graph" }
-            if let tool {
+            if let tool = tool {
                 let item = AIEvidence(field: field, value: String(value.prefix(4096)), tool: tool)
                 if !evidence.contains(item) { evidence.append(item) }
             }
@@ -297,8 +297,7 @@ enum AIMetadata {
                     budget -= Int(count)
                     textData = Data(output.prefix(Int(count)))
                 }
-                let value = String(data: textData, encoding: kind == "iTXt" ? .utf8 : .isoLatin1)
-                guard let value else { throw Failure.malformed }
+                guard let value = String(data: textData, encoding: kind == "iTXt" ? .utf8 : .isoLatin1) else { throw Failure.malformed }
                 if key == "XML:com.adobe.xmp" {
                     if let metadata = CGImageMetadataCreateFromXMPData(textData as CFData) {
                         CGImageMetadataEnumerateTagsUsingBlock(metadata, nil, nil) { path, tag in

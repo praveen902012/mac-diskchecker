@@ -89,3 +89,23 @@ Results show the inspected-image count, matches, skipped/unsupported files, and 
 Detection recognizes explicit generator names in software/creator metadata, structured Stable Diffusion parameters, and ComfyUI sampler graphs. Filenames, generic mentions of AI, and ordinary photo-editor tags do not establish a match. Evidence is unverified: metadata can be edited or removed, and no hints found does not mean human-made. The check does not validate C2PA credentials, analyze pixels, upload data, or delete files.
 
 Unlike the ordinary disk scan, this optional action opens files to read embedded metadata. PNG text chunks, compressed text, XMP, and selected EXIF fields are inspected without loading image pixels. Encoded PNG metadata and decompressed text share an 8 MiB budget. JPEG, HEIC, and TIFF use ImageIO; their entire encoded input is conservatively limited to 8 MiB, so larger files are reported as incomplete. Extracted metadata is also limited to 8 MiB. Displayed evidence is shortened to 4,096 characters. Symbolic links, other volumes, and undownloaded cloud placeholders are skipped; the app does not request downloads. Results represent that check, not live monitoring.
+
+## Intel / macOS Catalina compatibility edition
+
+An AppKit edition supports Intel Macs running **macOS Catalina 10.15.7 or later**. It reuses the same storage scanner, AI metadata detector, screenshot recognition, and Trash eligibility rules. The interface provides folder navigation, size charts, filtering, Finder reveal, AI evidence reports, cancellation, and reviewed cleanup using controls available on Catalina.
+
+Build on an Intel Mac with Apple Command Line Tools (Swift 5.3 or newer):
+
+```sh
+./scripts/test-catalina.sh
+./scripts/package-catalina.sh
+open "dist/catalina/Disk Checker.app"
+```
+
+To create its installer using Python 3:
+
+```sh
+python3 scripts/dmg-release.py --skip-build --catalina
+```
+
+The compatibility installer is named `Disk-Checker-0.1.2-catalina-x86_64.dmg`. This is a separate build from the Apple silicon/Homebrew release. It uses an ad-hoc signature and is not Apple-notarized. On Catalina, Full Disk Access is under **System Preferences → Security & Privacy → Privacy**. AI checks remain local and metadata-based, with the same detection limits described above.

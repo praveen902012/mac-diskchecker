@@ -200,3 +200,9 @@ This creates `dist/Disk-Checker-VERSION-arm64.dmg` and its `.dmg.sha256` file (w
 Upload both DMG files alongside the ZIP and ZIP checksum in the versioned GitHub release. Installer binaries stay in release assets; commit the source, version, packaging scripts, and Homebrew cask to Git. Include all four asset paths in `gh release create`, or use `gh release upload vVERSION DMG_PATH CHECKSUM_PATH` for an existing release. Do not replace published assets.
 
 After upload, download both archives and compare them with the local originals. To check the DMG locally, mount it read-only with `hdiutil attach -readonly -nobrowse`, verify the mounted app with `codesign --verify --deep --strict`, and detach it with `hdiutil detach` when finished.
+
+## Catalina compatibility build
+
+Use `scripts/package-catalina.sh` on an Intel Mac with Swift 5.3+ Command Line Tools. The script targets macOS 10.15.7 and builds the AppKit entry point together with the shared scanner and cleanup code. Run `scripts/test-catalina.sh` on that Mac before installation. Modern Apple silicon toolchains may omit the Intel compatibility libraries, so use the Intel host's native compiler instead of assuming cross-compilation will work.
+
+The resulting app is `dist/catalina/Disk Checker.app`. Run `python3 scripts/dmg-release.py --skip-build --catalina` to create a separate `catalina-x86_64` installer. Do not change the Apple silicon Homebrew cask to point at this edition. Verify the bundle's minimum OS, architecture, signature, and launch behavior on Catalina before distributing it.

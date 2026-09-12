@@ -14,10 +14,11 @@ ROOT = Path(__file__).resolve().parent.parent
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--skip-build', action='store_true', help='Package the existing built app')
+    parser.add_argument('--catalina', action='store_true', help='Package the Intel Catalina compatibility app')
     args = parser.parse_args()
     if not args.skip_build:
-        subprocess.run([str(ROOT / 'scripts/package.sh')], cwd=ROOT, check=True)
-    app = ROOT / 'dist/Disk Checker.app'
+        subprocess.run([str(ROOT / ('scripts/package-catalina.sh' if args.catalina else 'scripts/package.sh'))], cwd=ROOT, check=True)
+    app = ROOT / ('dist/catalina/Disk Checker.app' if args.catalina else 'dist/Disk Checker.app')
     info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
     version = info['CFBundleShortVersionString']
     if not re.fullmatch(r'\d+\.\d+\.\d+', version):
@@ -29,7 +30,8 @@ def main():
     if suffix is None:
         raise ValueError(f'Unsupported architectures: {archs}')
     subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
-    output = ROOT / 'dist' / f'Disk-Checker-{version}-{suffix}.dmg'
+    variant = 'catalina-' if args.catalina else ''
+    output = ROOT / 'dist' / f'Disk-Checker-{version}-{variant}{suffix}.dmg'
     if output.exists():
         raise FileExistsError(f'Refusing to replace an existing disk image: {output}')
     with tempfile.TemporaryDirectory(prefix='dmg-stage-', dir=ROOT / 'dist') as staging:
@@ -43,7 +45,7 @@ def main():
             'Open Disk Checker from Applications.\n\n'
             'Development preview: ad-hoc signed, not Apple-notarized.\n'
             'macOS Gatekeeper may block launch.\n'
-            'Requires macOS 14 or later and a compatible processor.\n'
+            f"Requires macOS {info['LSMinimumSystemVersion']} or later and a compatible processor.\n"
         )
         subprocess.run(['hdiutil', 'create', '-volname', 'Disk Checker', '-srcfolder', str(stage),
                         '-format', 'UDZO', '-fs', 'HFS+', str(output)], check=True)

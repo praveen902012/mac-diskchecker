@@ -117,7 +117,7 @@ struct ScannerTests {
         let token = ScanCancellation()
         token.cancel()
         throwsError(try DiskScanner.scan(FileManager.default.temporaryDirectory, cancellation: token)) {
-            expect($0 is CancellationError)
+            expect($0 is ScanCancelled)
         }
     }
     func testMissingRoot() {

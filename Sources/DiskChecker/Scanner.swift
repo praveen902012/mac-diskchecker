@@ -1,7 +1,7 @@
 import Foundation
 import Darwin
 
-struct ScanNode: Identifiable, Sendable {
+struct ScanNode: Identifiable, DiskTransferable {
     let id: Int
     let url: URL
     let parent: Int?
@@ -11,22 +11,22 @@ struct ScanNode: Identifiable, Sendable {
     var name: String { url.lastPathComponent.isEmpty ? url.path : url.lastPathComponent }
 }
 
-struct ScanResult: Sendable {
+struct ScanResult: DiskTransferable {
     var nodes: [ScanNode]
     var issues: [String]
     var fileCount: Int
 }
 
-final class ScanCancellation: @unchecked Sendable {
+final class ScanCancellation {
     private let lock = NSLock()
     private var value = false
-    func cancel() { lock.withLock { value = true } }
-    var isCancelled: Bool { lock.withLock { value } }
+    func cancel() { lock.lock(); defer { lock.unlock() }; value = true }
+    var isCancelled: Bool { lock.lock(); defer { lock.unlock() }; return value }
 }
 
 enum DiskScanner {
     static func scan(_ root: URL, cancellation: ScanCancellation,
-                     progress: @Sendable (Int, String) -> Void = { _, _ in }) throws -> ScanResult {
+                     progress: ScanProgress = { _, _ in }) throws -> ScanResult {
         let fm = FileManager.default
         let keys: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey,
             .totalFileAllocatedSizeKey, .fileAllocatedSizeKey, .fileSizeKey]
@@ -42,7 +42,7 @@ enum DiskScanner {
         var fileCount = 0
         var lastProgress = Date.distantPast
         while let parent = pending.popLast() {
-            if cancellation.isCancelled { throw CancellationError() }
+            if cancellation.isCancelled { throw ScanCancelled() }
             let urls: [URL]
             do {
                 urls = try fm.contentsOfDirectory(at: nodes[parent].url,
@@ -52,7 +52,7 @@ enum DiskScanner {
                 continue
             }
             for url in urls {
-                if cancellation.isCancelled { throw CancellationError() }
+                if cancellation.isCancelled { throw ScanCancelled() }
                 do {
                     let values = try url.resourceValues(forKeys: keys)
                     if values.isSymbolicLink == true { continue }
@@ -91,7 +91,7 @@ enum DiskScanner {
         for id in nodes.indices.reversed() {
             if let parent = nodes[id].parent { nodes[parent].bytes += nodes[id].bytes }
         }
-        if cancellation.isCancelled { throw CancellationError() }
+        if cancellation.isCancelled { throw ScanCancelled() }
         return ScanResult(nodes: nodes, issues: issues, fileCount: fileCount)
     }
 }

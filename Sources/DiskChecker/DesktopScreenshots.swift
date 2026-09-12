@@ -1,19 +1,19 @@
 import Foundation
 import Darwin
 
-struct DesktopScreenshot: Identifiable, Sendable {
+struct DesktopScreenshot: Identifiable, DiskTransferable {
     var id: URL { url }
     let url: URL
     let bytes: Int64
     let fingerprint: String
 }
 
-struct ScreenshotSearch: Sendable {
+struct ScreenshotSearch: DiskTransferable {
     var items: [DesktopScreenshot] = []
     var issues: [String] = []
 }
 
-struct ScreenshotCleanup: Sendable {
+struct ScreenshotCleanup: DiskTransferable {
     var moved = 0
     var issues: [String] = []
 }

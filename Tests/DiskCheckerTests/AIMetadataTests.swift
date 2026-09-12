@@ -1,8 +1,15 @@
 import Foundation
 import ImageIO
 import CoreGraphics
-import UniformTypeIdentifiers
 import zlib
+
+private struct FixtureImageType {
+    let identifier: String
+    static let png = FixtureImageType(identifier: "public.png")
+    static let jpeg = FixtureImageType(identifier: "public.jpeg")
+    static let tiff = FixtureImageType(identifier: "public.tiff")
+    static let heic = FixtureImageType(identifier: "public.heic")
+}
 
 extension ScannerTests {
     func testAIMetadata() throws {
@@ -20,11 +27,11 @@ extension ScannerTests {
         let context = CGContext(data: nil, width: 64, height: 64, bitsPerComponent: 8, bytesPerRow: 256,
                                 space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
         let image = context.makeImage()!
-        func encoded(_ type: UTType, software: String? = nil) -> Data {
+        func encoded(_ type: FixtureImageType, software: String? = nil) -> Data {
             let data = NSMutableData()
             let dest = CGImageDestinationCreateWithData(data, type.identifier as CFString, 1, nil)!
             var props: [CFString: Any] = [:]
-            if let software { props[kCGImagePropertyTIFFDictionary] = [kCGImagePropertyTIFFSoftware: software] }
+            if let software = software { props[kCGImagePropertyTIFFDictionary] = [kCGImagePropertyTIFFSoftware: software] }
             CGImageDestinationAddImage(dest, image, props as CFDictionary)
             expect(CGImageDestinationFinalize(dest))
             return data as Data
@@ -69,7 +76,7 @@ extension ScannerTests {
         let clean = root.appendingPathComponent("stripped.png")
         try base.write(to: clean)
         equal(AIMetadata.inspect(clean).status, .none)
-        for (ext, type) in [("jpg", UTType.jpeg), ("tiff", UTType.tiff), ("heic", UTType.heic)] {
+        for (ext, type) in [("jpg", FixtureImageType.jpeg), ("tiff", FixtureImageType.tiff), ("heic", FixtureImageType.heic)] {
             let url = root.appendingPathComponent("tagged." + ext)
             try encoded(type, software: "ComfyUI").write(to: url)
             equal(AIMetadata.inspect(url).status, .hints)

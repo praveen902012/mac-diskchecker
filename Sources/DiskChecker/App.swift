@@ -191,7 +191,7 @@ final class DiskModel: ObservableObject {
                 volumeTotal = Int64(values?.volumeTotalCapacity ?? 0)
                 volumeFree = Int64(values?.volumeAvailableCapacity ?? 0)
                 status = "\(output.fileCount.formatted()) files checked · \(output.issues.count) skipped or unreadable locations"
-            } catch is CancellationError {
+            } catch is ScanCancelled {
                 status = "Scan cancelled. Any previous results are still available."
             } catch { self.error = error.localizedDescription; status = "Scan could not finish." }
         }
